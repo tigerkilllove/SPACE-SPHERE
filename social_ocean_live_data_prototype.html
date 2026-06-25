@@ -1,0 +1,2789 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Social Ocean — Live Data Prototype</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #02050a;
+      color: white;
+      font-family: Inter, Arial, sans-serif;
+      touch-action: none;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+    }
+
+    .main-btn {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      z-index: 20;
+      height: 54px;
+      padding: 0 26px;
+      border: 0;
+      border-radius: 999px;
+      color: #03111b;
+      background: linear-gradient(135deg, #f4fdff, #7ce6ff 55%, #a4ffdf);
+      font-weight: 950;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 16px 55px rgba(0, 230, 255, 0.26), 0 0 0 1px rgba(255,255,255,0.35) inset;
+    }
+
+    .main-btn:active {
+      transform: translateX(-50%) translateY(1px);
+    }
+
+    .mini-panel {
+      position: fixed;
+      right: 14px;
+      bottom: 18px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+    }
+
+    .mini {
+      min-width: 42px;
+      width: auto;
+      height: 42px;
+      padding: 0 10px;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 50%;
+      color: rgba(255,255,255,0.90);
+      background: rgba(4, 12, 22, 0.48);
+      backdrop-filter: blur(14px);
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .mini.active {
+      color: #03111b;
+      background: linear-gradient(135deg, #f4fdff, #7ce6ff 55%, #a4ffdf);
+      box-shadow: 0 0 30px rgba(124,230,255,0.28);
+    }
+
+    .stats {
+      position: fixed;
+      left: 14px;
+      bottom: 18px;
+      z-index: 20;
+      padding: 9px 12px;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 999px;
+      color: rgba(255,255,255,0.86);
+      background: rgba(4, 12, 22, 0.48);
+      backdrop-filter: blur(14px);
+      font-size: 13px;
+      font-weight: 850;
+      user-select: none;
+    }
+
+    .stats span {
+      color: #a4ffdf;
+    }
+
+    .composer {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      place-items: end center;
+      padding: 18px;
+      box-sizing: border-box;
+      background: rgba(0,0,0,0.38);
+      backdrop-filter: blur(7px);
+    }
+
+    .composer.show {
+      display: grid;
+    }
+
+    .composer-card {
+      width: min(720px, 100%);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 24px;
+      background: rgba(5, 15, 26, 0.90);
+      box-shadow: 0 22px 80px rgba(0,0,0,0.58);
+      backdrop-filter: blur(18px);
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
+    .composer-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 3px 5px 11px;
+      color: rgba(255,255,255,0.78);
+      font-size: 13px;
+      font-weight: 800;
+      user-select: none;
+    }
+
+    .composer-row {
+      display: flex;
+      gap: 10px;
+      align-items: end;
+    }
+
+    #postInput,
+    #commentInput {
+      flex: 1;
+      min-height: 54px;
+      max-height: 140px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 16px;
+      color: white;
+      background: rgba(255,255,255,0.08);
+      outline: none;
+      padding: 13px 14px;
+      font: inherit;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    #commentInput {
+      min-height: 46px;
+      max-height: 90px;
+      border-radius: 14px;
+    }
+
+    #postInput::placeholder,
+    #commentInput::placeholder {
+      color: rgba(255,255,255,0.48);
+    }
+
+    .attach-label,
+    .icon-btn {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 16px;
+      color: rgba(255,255,255,0.88);
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      flex: 0 0 auto;
+      font-size: 21px;
+      box-sizing: border-box;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .send {
+      height: 48px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 16px;
+      color: #03111b;
+      background: linear-gradient(135deg, #f4fdff, #7ce6ff 55%, #a4ffdf);
+      font-weight: 950;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .file-name {
+      display: none;
+      margin: 0 0 9px 4px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.62);
+      user-select: none;
+    }
+
+    .file-name.show {
+      display: block;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      place-items: center;
+      background: rgba(0,0,0,0.46);
+      backdrop-filter: blur(8px);
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .modal.show {
+      display: grid;
+    }
+
+    .post-panel,
+    .profile-panel {
+      width: min(560px, 100%);
+      max-height: min(780px, calc(100vh - 32px));
+      overflow: auto;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 26px;
+      background: rgba(5, 15, 26, 0.92);
+      box-shadow: 0 22px 90px rgba(0,0,0,0.62);
+      padding: 14px;
+      box-sizing: border-box;
+    }
+
+    .post-panel {
+      touch-action: pan-y;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .post-panel.swipe-right {
+      transform: translateX(28px) rotate(1.4deg);
+      border-color: rgba(164,255,223,0.60);
+      box-shadow: 0 22px 90px rgba(0,0,0,0.62), 0 0 42px rgba(164,255,223,0.20);
+    }
+
+    .post-panel.swipe-left {
+      transform: translateX(-28px) rotate(-1.4deg);
+      border-color: rgba(255,132,198,0.60);
+      box-shadow: 0 22px 90px rgba(0,0,0,0.62), 0 0 42px rgba(255,132,198,0.20);
+    }
+
+    .post-panel.swipe-up {
+      transform: translateY(-28px) scale(0.98);
+      border-color: rgba(255,255,255,0.28);
+    }
+
+    .post-head,
+    .profile-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 3px 12px;
+    }
+
+    .avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #03111b;
+      font-weight: 950;
+      background: linear-gradient(135deg, #f4fdff, #7ce6ff 55%, #a4ffdf);
+      box-shadow: 0 0 24px rgba(124,230,255,0.24);
+      flex: 0 0 auto;
+    }
+
+    .post-user,
+    .profile-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .nick {
+      font-weight: 950;
+      color: rgba(255,255,255,0.95);
+      cursor: pointer;
+      word-break: break-word;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: rgba(255,255,255,0.52);
+      margin-top: 2px;
+    }
+
+    .follow {
+      height: 38px;
+      padding: 0 13px;
+      border: 0;
+      border-radius: 999px;
+      color: #03111b;
+      background: linear-gradient(135deg, #f4fdff, #7ce6ff 55%, #a4ffdf);
+      font-weight: 950;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .follow.following {
+      color: rgba(255,255,255,0.84);
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.13);
+    }
+
+    .modal-close {
+      height: 38px;
+      width: 38px;
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 50%;
+      color: rgba(255,255,255,0.86);
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .post-body {
+      border-radius: 22px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 15px;
+      box-sizing: border-box;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.88);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .post-image {
+      display: none;
+      margin-top: 12px;
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .post-image.show {
+      display: block;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      padding: 12px 2px;
+    }
+
+    .action {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.84);
+      background: rgba(255,255,255,0.07);
+      font-weight: 850;
+      cursor: pointer;
+    }
+
+    .action.active {
+      color: #03111b;
+      background: linear-gradient(135deg, #ffd6f3, #ff83c7);
+      border-color: transparent;
+    }
+
+    .comments-title {
+      margin: 6px 2px 9px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.80);
+      font-size: 13px;
+    }
+
+    .comments {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+      max-height: 210px;
+      overflow: auto;
+    }
+
+    .comment {
+      border-radius: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 9px 10px;
+      color: rgba(255,255,255,0.82);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .comment b {
+      color: #a4ffdf;
+    }
+
+    .comment-row {
+      display: flex;
+      gap: 9px;
+      align-items: end;
+    }
+
+    .profile-bio {
+      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 12px;
+      color: rgba(255,255,255,0.80);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .profile-posts {
+      display: grid;
+      gap: 8px;
+    }
+
+    .profile-post {
+      padding: 10px 11px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.82);
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%) translateY(-8px);
+      z-index: 80;
+      max-width: min(560px, calc(100vw - 34px));
+      padding: 11px 14px;
+      border-radius: 999px;
+      background: rgba(4, 12, 22, 0.62);
+      border: 1px solid rgba(124,230,255,0.18);
+      color: rgba(255,255,255,0.88);
+      backdrop-filter: blur(14px);
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      background:
+        radial-gradient(circle at 50% 45%, transparent 0%, transparent 47%, rgba(0,0,0,0.30) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.22), transparent 30%, rgba(0,0,0,0.30));
+    }
+
+    @media (max-width: 700px) {
+      .main-btn {
+        bottom: 15px;
+        height: 50px;
+        font-size: 15px;
+      }
+
+      .mini-panel {
+        right: 10px;
+        bottom: 14px;
+        flex-direction: column;
+      }
+
+      .mini {
+        min-width: 38px;
+        width: auto;
+        height: 38px;
+        padding: 0 9px;
+        font-size: 13px;
+      }
+
+      .stats {
+        left: 10px;
+        bottom: 15px;
+        font-size: 12px;
+      }
+
+      .composer {
+        padding: 10px;
+      }
+
+      .composer-row,
+      .comment-row {
+        gap: 8px;
+      }
+
+      .send {
+        padding: 0 13px;
+      }
+
+      .attach-label,
+      .icon-btn {
+        width: 44px;
+        height: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <button class="main-btn" id="createBtn" type="button">Бросить пост</button>
+
+  <div class="stats">
+    live <span id="liveCount">0</span> · подписки <span id="followCount">0</span> · посты <span id="postCount">0</span> · энергия <span id="energyCount">0</span> · маяк <span id="beaconLevel">0</span>
+  </div>
+
+  <div class="mini-panel">
+    <button class="mini" id="liveBtn" type="button" title="Подгрузить реальные данные">LIVE</button>
+    <button class="mini" id="buildBeaconBtn" type="button" title="Построить / улучшить маяк вкуса">◇</button>
+    <button class="mini" id="randomPostBtn" type="button" title="Случайный пост">?</button>
+    <button class="mini" id="trendBtn" type="button" title="Тренд-волна">↯</button>
+  </div>
+
+  <div class="composer" id="composer">
+    <div class="composer-card">
+      <div class="composer-title">
+        <span>@you бросает новый пост в океан</span>
+        <span>текст / картинка / ссылка</span>
+      </div>
+      <div class="file-name" id="fileName"></div>
+      <div class="composer-row">
+        <label class="attach-label" title="Прикрепить изображение">
+          +
+          <input id="fileInput" type="file" accept="image/*" />
+        </label>
+        <textarea id="postInput" maxlength="180" placeholder="Напиши пост, мысль, кринж, новость или ссылку..."></textarea>
+        <button class="send" id="sendPostBtn" type="button">В поток</button>
+        <button class="icon-btn" id="closeComposerBtn" type="button">×</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="postModal">
+    <div class="post-panel">
+      <div class="post-head">
+        <div class="avatar" id="postAvatar">?</div>
+        <div class="post-user">
+          <div class="nick" id="postNick">@user</div>
+          <div class="meta" id="postMeta">floating post</div>
+        </div>
+        <button class="follow" id="postFollowBtn" type="button">Подписаться</button>
+        <button class="modal-close" id="closePostBtn" type="button">×</button>
+      </div>
+
+      <div class="post-body" id="postBody"></div>
+      <img class="post-image" id="postImage" alt="attached image" />
+
+      <div class="actions">
+        <button class="action" id="likeBtn" type="button">♡ лайк</button>
+        <button class="action" id="commentFocusBtn" type="button">коммент</button>
+        <button class="action" id="repostBtn" type="button">репост в океан</button>
+        <button class="action" id="sourceBtn" type="button">источник</button>
+      </div>
+
+      <div class="comments-title" id="commentsTitle">Комментарии</div>
+      <div class="comments" id="comments"></div>
+
+      <div class="comment-row">
+        <textarea id="commentInput" maxlength="120" placeholder="Написать под этой информацией..."></textarea>
+        <button class="send" id="sendCommentBtn" type="button">Отпр.</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="profileModal">
+    <div class="profile-panel">
+      <div class="profile-head">
+        <div class="avatar" id="profileAvatar">?</div>
+        <div class="profile-name">
+          <div class="nick" id="profileNick">@user</div>
+          <div class="meta" id="profileMeta">0 подписчиков · 0 постов</div>
+        </div>
+        <button class="follow" id="profileFollowBtn" type="button">Подписаться</button>
+        <button class="modal-close" id="closeProfileBtn" type="button">×</button>
+      </div>
+      <div class="profile-bio" id="profileBio"></div>
+      <div class="comments-title">Посты пользователя</div>
+      <div class="profile-posts" id="profilePosts"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="vignette"></div>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+    const app = document.getElementById('app');
+    const createBtn = document.getElementById('createBtn');
+    const composer = document.getElementById('composer');
+    const postInput = document.getElementById('postInput');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const sendPostBtn = document.getElementById('sendPostBtn');
+    const closeComposerBtn = document.getElementById('closeComposerBtn');
+    const liveBtn = document.getElementById('liveBtn');
+    const buildBeaconBtn = document.getElementById('buildBeaconBtn');
+    const randomPostBtn = document.getElementById('randomPostBtn');
+    const trendBtn = document.getElementById('trendBtn');
+    const liveCountEl = document.getElementById('liveCount');
+    const followCountEl = document.getElementById('followCount');
+    const postCountEl = document.getElementById('postCount');
+    const energyCountEl = document.getElementById('energyCount');
+    const beaconLevelEl = document.getElementById('beaconLevel');
+    const toast = document.getElementById('toast');
+
+    const postModal = document.getElementById('postModal');
+    const postAvatar = document.getElementById('postAvatar');
+    const postNick = document.getElementById('postNick');
+    const postMeta = document.getElementById('postMeta');
+    const postFollowBtn = document.getElementById('postFollowBtn');
+    const closePostBtn = document.getElementById('closePostBtn');
+    const postBody = document.getElementById('postBody');
+    const postImage = document.getElementById('postImage');
+    const likeBtn = document.getElementById('likeBtn');
+    const commentFocusBtn = document.getElementById('commentFocusBtn');
+    const repostBtn = document.getElementById('repostBtn');
+    const sourceBtn = document.getElementById('sourceBtn');
+    const commentsTitle = document.getElementById('commentsTitle');
+    const comments = document.getElementById('comments');
+    const commentInput = document.getElementById('commentInput');
+    const sendCommentBtn = document.getElementById('sendCommentBtn');
+
+    const profileModal = document.getElementById('profileModal');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileNick = document.getElementById('profileNick');
+    const profileMeta = document.getElementById('profileMeta');
+    const profileFollowBtn = document.getElementById('profileFollowBtn');
+    const closeProfileBtn = document.getElementById('closeProfileBtn');
+    const profileBio = document.getElementById('profileBio');
+    const profilePosts = document.getElementById('profilePosts');
+
+    let selectedImageData = null;
+    let selectedPost = null;
+    let selectedUser = null;
+    let nextPostId = 1;
+    let selectedImagePreviewText = '';
+    let trendPower = 0;
+    let trendTimer = 0;
+    let liveLoadedCount = 0;
+    let liveLoading = false;
+    let lastLiveFetchAt = 0;
+
+    const followed = new Set();
+    const liked = new Set();
+    const disliked = new Set();
+
+    const preferenceScores = {
+      photo: 0,
+      meme: 0,
+      news: 0,
+      ai: 0,
+      ocean: 0,
+      social: 0,
+      work: 0,
+      weird: 0
+    };
+
+    let energy = 0;
+    let beaconLevel = 0;
+    let beaconGroup = null;
+    let preferenceSpawnTimer = 7;
+    let swipeStart = null;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x06131d, 0.0215);
+
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 900);
+    camera.position.set(0, 7.4, 14);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance',
+      alpha: false
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x02050a, 1);
+    app.appendChild(renderer.domElement);
+
+    scene.add(new THREE.HemisphereLight(0x7edcff, 0x031018, 1.65));
+
+    const moon = new THREE.DirectionalLight(0xc7f5ff, 2.1);
+    moon.position.set(-8, 16, 10);
+    scene.add(moon);
+
+    const glow = new THREE.PointLight(0x7ce6ff, 21, 95);
+    scene.add(glow);
+
+    // Sky
+    const skyGeo = new THREE.SphereGeometry(430, 32, 16);
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      uniforms: { time: { value: 0 }, trend: { value: 0 } },
+      vertexShader: `
+        varying vec3 vWorld;
+        void main() {
+          vec4 w = modelMatrix * vec4(position, 1.0);
+          vWorld = w.xyz;
+          gl_Position = projectionMatrix * viewMatrix * w;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vWorld;
+        uniform float time;
+        uniform float trend;
+
+        float hash(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+
+        void main() {
+          float h = normalize(vWorld).y;
+          vec3 top = mix(vec3(0.014, 0.04, 0.075), vec3(0.085, 0.025, 0.075), trend * 0.65);
+          vec3 low = mix(vec3(0.004, 0.014, 0.024), vec3(0.018, 0.008, 0.018), trend * 0.60);
+          vec3 col = mix(low, top, smoothstep(-0.15, 0.85, h));
+
+          vec2 p = normalize(vWorld).xz * 82.0;
+          float stars = step(0.996, hash(floor(p)));
+          stars *= smoothstep(0.06, 0.72, h);
+          stars *= 0.45 + 0.55 * sin(time * (0.7 + trend * 2.0) + hash(floor(p)) * 20.0);
+
+          float glitch = step(0.985, hash(floor(p * 0.25 + time))) * trend;
+          col += vec3(stars) * 0.85;
+          col += vec3(0.0, 0.18, 0.22) * pow(max(0.0, 1.0 - abs(h - 0.05) * 5.0), 2.0) * 0.28;
+          col += vec3(1.0, 0.3, 0.75) * glitch * 0.18;
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `
+    });
+    const sky = new THREE.Mesh(skyGeo, skyMat);
+    scene.add(sky);
+
+    // Water
+    const waterUniforms = {
+      time: { value: 0 },
+      offset: { value: new THREE.Vector2(0, 0) },
+      cameraPos: { value: new THREE.Vector3() },
+      trend: { value: 0 }
+    };
+
+    const waterGeo = new THREE.PlaneGeometry(580, 580, 190, 190);
+    const waterMat = new THREE.ShaderMaterial({
+      uniforms: waterUniforms,
+      vertexShader: `
+        uniform float time;
+        uniform vec2 offset;
+        uniform float trend;
+        varying float vWave;
+        varying vec3 vWorld;
+
+        float waveHeight(float x, float z) {
+          float s = 1.0 + trend * 0.75;
+          float h = 0.0;
+          h += sin(x * 0.115 + time * 0.95 * s) * 0.34;
+          h += sin(z * 0.095 - time * 0.70 * s) * 0.28;
+          h += sin((x + z) * 0.062 + time * 0.45 * s) * 0.45;
+          h += sin(length(vec2(x, z)) * 0.035 - time * 0.9 * s) * 0.20;
+          h += sin((x * 0.19 - z * 0.11) + time * 1.75) * 0.18 * trend;
+          return h * (1.0 + trend * 0.42);
+        }
+
+        void main() {
+          vec3 pos = position;
+          float wx = position.x + offset.x;
+          float wz = position.y + offset.y;
+          float h = waveHeight(wx, wz);
+
+          pos.z = h;
+          vWave = h;
+
+          vec4 world = modelMatrix * vec4(pos, 1.0);
+          vWorld = world.xyz;
+          gl_Position = projectionMatrix * viewMatrix * world;
+        }
+      `,
+      fragmentShader: `
+        uniform float time;
+        uniform vec3 cameraPos;
+        uniform float trend;
+        varying float vWave;
+        varying vec3 vWorld;
+
+        void main() {
+          float dist = distance(cameraPos.xz, vWorld.xz);
+          float fresnel = pow(1.0 - max(dot(normalize(cameraPos - vWorld), vec3(0.0, 1.0, 0.0)), 0.0), 2.0);
+
+          vec3 deep = mix(vec3(0.00, 0.052, 0.085), vec3(0.075, 0.018, 0.055), trend * 0.38);
+          vec3 mid = mix(vec3(0.00, 0.19, 0.25), vec3(0.22, 0.07, 0.16), trend * 0.34);
+          vec3 foam = mix(vec3(0.68, 0.96, 1.0), vec3(1.0, 0.64, 0.92), trend * 0.6);
+
+          float lineA = sin(vWorld.x * 0.42 + vWorld.z * 0.18 + time * (1.5 + trend));
+          float lineB = sin(vWorld.z * 0.35 - time * (1.1 + trend * 1.3));
+          float streak = smoothstep(0.87 - trend * 0.08, 1.0, lineA * 0.55 + lineB * 0.45);
+
+          vec3 col = mix(deep, mid, smoothstep(-0.8, 0.8, vWave));
+          col += foam * streak * (0.11 + trend * 0.12);
+          col += vec3(0.45, 0.95, 1.0) * fresnel * (0.18 + trend * 0.1);
+          col *= 1.0 - smoothstep(120.0, 280.0, dist) * (0.44 + trend * 0.15);
+
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.rotation.x = -Math.PI / 2;
+    scene.add(water);
+
+    const grid = new THREE.GridHelper(900, 90, 0x18596b, 0x0b2937);
+    grid.position.y = -3.1;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.11;
+    scene.add(grid);
+
+    const clock = new THREE.Clock();
+    const keys = new Set();
+
+    let yaw = Math.PI;
+    let pitch = -0.28;
+    let isDragging = false;
+    let movedDuringPointer = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    const player = {
+      pos: new THREE.Vector2(0, 0),
+      target: new THREE.Vector2(0, 0),
+      height: 7.4
+    };
+
+    const clickableObjects = [];
+
+    const users = [];
+    const posts = [];
+    const ripples = [];
+
+    const botNames = [
+      'doomscroll_dima',
+      'meme_karp',
+      'prague_noise',
+      'ai_siren',
+      'lost_linka',
+      '404_vika',
+      'news_fish',
+      'pixel_oleg',
+      'trash_oracle',
+      'feed_ghost',
+      'random_kate',
+      'ocean_admin'
+    ];
+
+    const botBios = [
+      'плыву по ленте и делаю вид, что контролирую алгоритм',
+      'репощу всё, что уже потеряло смысл',
+      'живу между мемом и тревожной новостью',
+      'если ты это читаешь, значит контент победил',
+      'аватар без берега, посты без источника'
+    ];
+
+    const liveSourceProfiles = {
+      hacker_news: { nick: 'hacker_news', bio: 'живые tech-ссылки из Hacker News / Algolia API', color: 0xffb067 },
+      wiki_live: { nick: 'wiki_live', bio: 'последние изменения Wikipedia recent changes', color: 0xbca3ff },
+      prague_weather: { nick: 'prague_weather', bio: 'живая погода Праги из Open-Meteo', color: 0x7ce6ff },
+      crypto_tide: { nick: 'crypto_tide', bio: 'живые крипто-цены из CoinGecko', color: 0xd6ff8f },
+      github_pulse: { nick: 'github_pulse', bio: 'публичные события GitHub API', color: 0xffffff },
+      telegram_bridge: { nick: 'telegram_bridge', bio: 'место для подключения приватной Telegram-группы через backend', color: 0x72ffe6 }
+    };
+
+    const samplePosts = [
+      'я зашёл сюда на минуту и теперь у меня морская болезнь от ленты',
+      'новый тренд: писать посты, которые физически уплывают от ответственности',
+      'сегодня интернет ощущается как мокрый пакет с новостями',
+      'если пост утонул — он стал приватным или просто никому не нужен?',
+      'кто-нибудь ещё слышит, как алгоритм шепчет под водой?',
+      'POV: ты не скроллишь ленту, ты реально в ней плаваешь',
+      'продаю смысл, немного намок, торг уместен',
+      'все мои черновики всплыли и теперь смотрят на меня',
+      'тут можно подписаться на человека, пока его не унесло течением',
+      'я не инфлюенсер, я буй с тревожным ником'
+    ];
+
+    // Demo photo stream. These URLs are loaded from external public image endpoints.
+    // In a real product, replace this with your own moderated, licensed/open-source image pipeline.
+    const samplePhotoUrls = [
+      'https://picsum.photos/seed/info-ocean-01/900/1200',
+      'https://picsum.photos/seed/info-ocean-02/900/1200',
+      'https://picsum.photos/seed/info-ocean-03/900/1200',
+      'https://picsum.photos/seed/info-ocean-04/900/1200',
+      'https://picsum.photos/seed/info-ocean-05/900/1200',
+      'https://picsum.photos/seed/info-ocean-06/900/1200',
+      'https://picsum.photos/seed/info-ocean-07/900/1200',
+      'https://picsum.photos/seed/info-ocean-08/900/1200',
+      'https://picsum.photos/seed/info-ocean-09/900/1200',
+      'https://picsum.photos/seed/info-ocean-10/900/1200'
+    ];
+
+    const photoCaptions = [
+      'фото всплыло из открытого потока',
+      'картинка без контекста, но с уверенностью',
+      'визуальный мусор тоже хочет лайков',
+      'кто-то выложил это и уплыл',
+      'пост-картинка дрейфует рядом с тобой',
+      'лента стала физической и немного мокрой',
+      'без подписи выглядит важнее',
+      'алгоритм поднял это со дна',
+      'открытый источник, закрытый смысл',
+      'это не скролл — это течение'
+    ];
+
+    const tagTemplates = {
+      photo: [
+        'визуальный пост всплыл рядом, потому что тебе нравятся картинки',
+        'ещё одна картинка без контекста, но алгоритм решил: тебе зайдёт',
+        'фото-поток притянуло к твоему маяку'
+      ],
+      meme: [
+        'мем всплыл рядом с тобой, потому что ты сам это выбрал',
+        'алгоритм решил: больше кринжа, меньше смысла',
+        'это не пост, это мокрый мем'
+      ],
+      news: [
+        'breaking: рядом с тобой появилась похожая новость',
+        'новостная пена снова пытается казаться важной',
+        'источник потерян, но пост уже рядом'
+      ],
+      ai: [
+        'AI summary: ты обучил океан на своих лайках',
+        'нейропост подплыл, потому что ты смотрел на похожее',
+        'алгоритм сделал вид, что понял твой вкус'
+      ],
+      ocean: [
+        'океан понял: тебе нравится сама идея плавать внутри ленты',
+        'контент дрейфует ближе к твоей зоне',
+        'пост намок, но стал релевантнее'
+      ],
+      social: [
+        'кто-то рядом тоже хочет подписку',
+        'пользователь подплыл к твоему вкусу',
+        'социальная волна принесла новый пост'
+      ],
+      work: [
+        'карьерная тревога всплыла в твоей ленте',
+        'рабочий чат стал физическим объектом',
+        'продуктивность намокла, но не сдалась'
+      ],
+      weird: [
+        'странный пост, но ты сам научил океан',
+        'это выглядит как ошибка, но алгоритм считает иначе',
+        'поток принёс что-то очень подозрительное'
+      ]
+    };
+
+
+
+    document.addEventListener('keydown', (e) => keys.add(e.code));
+    document.addEventListener('keyup', (e) => keys.delete(e.code));
+
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      if (e.target.closest?.('button') || e.target.closest?.('.composer') || e.target.closest?.('.modal')) return;
+      isDragging = true;
+      movedDuringPointer = false;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      renderer.domElement.setPointerCapture(e.pointerId);
+    });
+
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+
+      if (Math.abs(dx) + Math.abs(dy) > 2) movedDuringPointer = true;
+
+      yaw -= dx * 0.0032;
+      pitch -= dy * 0.0032;
+      pitch = Math.max(-1.46, Math.min(1.05, pitch));
+    });
+
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      isDragging = false;
+      try { renderer.domElement.releasePointerCapture(e.pointerId); } catch {}
+    });
+
+    const raycaster = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const hit = new THREE.Vector3();
+
+    renderer.domElement.addEventListener('click', (e) => {
+      if (e.target.closest?.('button') || e.target.closest?.('.composer') || e.target.closest?.('.modal')) return;
+      if (movedDuringPointer) return;
+
+      ndc.x = (e.clientX / window.innerWidth) * 2 - 1;
+      ndc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(ndc, camera);
+      const intersections = raycaster.intersectObjects(clickableObjects, true);
+
+      if (intersections.length) {
+        const obj = intersections[0].object;
+        const data = obj.userData || {};
+        if (data.kind === 'post') {
+          openPost(data.post);
+          return;
+        }
+        if (data.kind === 'user') {
+          openProfile(data.user);
+          return;
+        }
+      }
+
+      if (raycaster.ray.intersectPlane(groundPlane, hit)) {
+        const d = Math.hypot(hit.x - player.pos.x, hit.z - player.pos.y);
+        if (d > 5 && d < 280) {
+          player.target.set(hit.x, hit.z);
+          spawnRipple(hit.x, hit.z, 0x9cf7ff);
+        }
+      }
+    });
+
+    function getForwardRight() {
+      const forward = new THREE.Vector3(
+        Math.sin(yaw) * Math.cos(pitch),
+        Math.sin(pitch),
+        Math.cos(yaw) * Math.cos(pitch)
+      ).normalize();
+
+      const flatForward = new THREE.Vector3(forward.x, 0, forward.z).normalize();
+      const right = new THREE.Vector3(flatForward.z, 0, -flatForward.x).normalize();
+
+      return { forward, flatForward, right };
+    }
+
+    function updatePlayer(dt, t) {
+      const { forward, flatForward, right } = getForwardRight();
+      const move = new THREE.Vector3();
+
+      if (keys.has('KeyW') || keys.has('ArrowUp')) move.add(flatForward);
+      if (keys.has('KeyS') || keys.has('ArrowDown')) move.sub(flatForward);
+      if (keys.has('KeyD') || keys.has('ArrowRight')) move.add(right);
+      if (keys.has('KeyA') || keys.has('ArrowLeft')) move.sub(right);
+
+      if (move.lengthSq() > 0) {
+        move.normalize().multiplyScalar(19 * dt);
+        player.target.x += move.x;
+        player.target.y += move.z;
+      }
+
+      const smooth = 1 - Math.pow(0.001, dt);
+      player.pos.lerp(player.target, smooth);
+
+      camera.position.set(player.pos.x, player.height + Math.sin(t * 0.9) * 0.08, player.pos.y);
+      camera.lookAt(new THREE.Vector3().copy(camera.position).add(forward));
+
+      glow.position.set(player.pos.x, camera.position.y + 4, player.pos.y);
+    }
+
+    function waveHeight(x, z, t) {
+      const s = 1.0 + trendPower * 0.75;
+      return (
+        Math.sin(x * 0.115 + t * 0.95 * s) * 0.34 +
+        Math.sin(z * 0.095 - t * 0.70 * s) * 0.28 +
+        Math.sin((x + z) * 0.062 + t * 0.45 * s) * 0.45 +
+        Math.sin(Math.hypot(x, z) * 0.035 - t * 0.9 * s) * 0.20 +
+        Math.sin((x * 0.19 - z * 0.11) + t * 1.75) * 0.18 * trendPower
+      ) * (1.0 + trendPower * 0.42);
+    }
+
+    const playerAvatar = makePlayerAvatar();
+    scene.add(playerAvatar.group);
+
+    function makePlayerAvatar() {
+      const group = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.55, 1),
+        new THREE.MeshStandardMaterial({
+          color: 0xcdfcff,
+          emissive: 0x0a7d91,
+          emissiveIntensity: 1.25,
+          roughness: 0.35,
+          metalness: 0.35
+        })
+      );
+      group.add(body);
+
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.85, 0.035, 8, 72),
+        new THREE.MeshBasicMaterial({ color: 0x9cf7ff, transparent: true, opacity: 0.74 })
+      );
+      ring.rotation.x = Math.PI / 2;
+      group.add(ring);
+
+      const label = makeTextSprite('@you', {
+        bg1: 'rgba(216,255,255,0.95)',
+        bg2: 'rgba(124,230,255,0.86)',
+        fg: 'rgba(2,18,27,0.96)',
+        stroke: 'rgba(124,230,255,0.72)',
+        glow: 'rgba(124,230,255,0.9)',
+        size: 28,
+        height: 70,
+        maxWidth: 420
+      });
+      label.position.y = 1.45;
+      label.scale.set(2.8, 0.72, 1);
+      group.add(label);
+
+      return { group, body, ring, label };
+    }
+
+    function makeTextSprite(text, style = {}) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const size = style.size || 30;
+      const maxChars = style.maxChars || 220;
+      const safeText = String(text).trim().slice(0, maxChars) || '...';
+
+      const temp = document.createElement('canvas');
+      const tempCtx = temp.getContext('2d');
+      tempCtx.font = `800 ${size * dpr}px Arial, sans-serif`;
+
+      const maxWidth = (style.maxWidth || 780) * dpr;
+      const lines = splitLines(tempCtx, safeText, maxWidth, style.maxLines || 4);
+      const textWidth = Math.max(...lines.map(l => tempCtx.measureText(l).width), 120 * dpr);
+      const width = Math.min(1200, Math.max((style.minWidth || 220) * dpr, textWidth + 70 * dpr));
+      const height = (style.height || (70 + lines.length * 38)) * dpr;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, style.bg1 || 'rgba(255,255,255,0.97)');
+      grad.addColorStop(1, style.bg2 || 'rgba(174,255,231,0.90)');
+
+      roundRect(ctx, 6 * dpr, 8 * dpr, width - 12 * dpr, height - 16 * dpr, (style.radius || 24) * dpr);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.lineWidth = 2 * dpr;
+      ctx.strokeStyle = style.stroke || 'rgba(124,255,220,0.75)';
+      ctx.stroke();
+
+      ctx.shadowColor = style.glow || 'rgba(0,255,220,0.72)';
+      ctx.shadowBlur = 14 * dpr;
+      ctx.font = `800 ${size * dpr}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = style.fg || 'rgba(2,18,27,0.96)';
+
+      const lineHeight = size * dpr * 1.12;
+      const startY = height / 2 - (lines.length - 1) * lineHeight * 0.5;
+      lines.forEach((line, i) => ctx.fillText(line, width / 2, startY + i * lineHeight));
+
+      if (style.badge) {
+        ctx.shadowBlur = 0;
+        ctx.font = `700 ${10 * dpr}px Arial, sans-serif`;
+        ctx.fillStyle = style.badgeColor || 'rgba(2,18,27,0.42)';
+        ctx.fillText(style.badge, width / 2, height - 15 * dpr);
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      texture.needsUpdate = true;
+
+      const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+      const sprite = new THREE.Sprite(mat);
+      sprite.userData.aspect = width / height;
+      sprite.userData.text = safeText;
+      return sprite;
+    }
+
+    function makePostTexture(post) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const canvas = document.createElement('canvas');
+      canvas.width = 640 * dpr;
+      canvas.height = 860 * dpr;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, post.gradientA || 'rgba(255,255,255,0.97)');
+      grad.addColorStop(1, post.gradientB || 'rgba(174,255,231,0.90)');
+
+      roundRect(ctx, 0, 0, w, h, 42 * dpr);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.lineWidth = 4 * dpr;
+      ctx.strokeStyle = 'rgba(255,255,255,0.52)';
+      ctx.stroke();
+
+      // Header
+      ctx.fillStyle = 'rgba(2,18,27,0.94)';
+      ctx.font = `900 ${31 * dpr}px Arial, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('@' + post.user.nick, 44 * dpr, 38 * dpr);
+
+      ctx.font = `700 ${17 * dpr}px Arial, sans-serif`;
+      ctx.fillStyle = 'rgba(2,18,27,0.48)';
+      ctx.fillText(post.user.followers + ' followers · floating post', 44 * dpr, 76 * dpr);
+
+      // Avatar dot
+      ctx.beginPath();
+      ctx.arc(552 * dpr, 62 * dpr, 31 * dpr, 0, Math.PI * 2);
+      ctx.fillStyle = post.user.colorCss;
+      ctx.fill();
+      ctx.fillStyle = 'rgba(2,18,27,0.88)';
+      ctx.font = `900 ${22 * dpr}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(post.user.nick[0].toUpperCase(), 552 * dpr, 63 * dpr);
+
+      // Content area
+      const contentY = 145 * dpr;
+      const contentH = post.imageData ? 500 * dpr : 570 * dpr;
+      roundRect(ctx, 34 * dpr, contentY, w - 68 * dpr, contentH, 34 * dpr);
+      ctx.fillStyle = post.imageData ? 'rgba(2,18,27,0.88)' : 'rgba(255,255,255,0.35)';
+      ctx.fill();
+
+      if (post.imageData && post.imageCanvas) {
+        const img = post.imageCanvas;
+        const boxX = 48 * dpr;
+        const boxY = contentY + 18 * dpr;
+        const boxW = w - 96 * dpr;
+        const boxH = contentH - 36 * dpr;
+        const scale = Math.max(boxW / img.width, boxH / img.height);
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        ctx.save();
+        roundRect(ctx, boxX, boxY, boxW, boxH, 28 * dpr);
+        ctx.clip();
+        ctx.drawImage(img, boxX + (boxW - drawW) / 2, boxY + (boxH - drawH) / 2, drawW, drawH);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = 'rgba(2,18,27,0.94)';
+        ctx.font = `900 ${39 * dpr}px Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        wrapText(ctx, post.text, w / 2, contentY + contentH / 2 - 70 * dpr, w - 130 * dpr, 49 * dpr, 5);
+      }
+
+      // Caption strip
+      roundRect(ctx, 34 * dpr, 735 * dpr, w - 68 * dpr, 86 * dpr, 30 * dpr);
+      ctx.fillStyle = 'rgba(2,18,27,0.14)';
+      ctx.fill();
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(2,18,27,0.86)';
+      ctx.font = `800 ${22 * dpr}px Arial, sans-serif`;
+      const caption = post.imageData ? post.text : post.comments.length + ' comments · ' + post.likes + ' likes';
+      ctx.fillText(cut(caption, 46), 60 * dpr, 778 * dpr);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(2,18,27,0.50)';
+      ctx.font = `800 ${17 * dpr}px Arial, sans-serif`;
+      ctx.fillText('tap to open', w - 58 * dpr, 824 * dpr);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    function makeImageCanvas(dataUrl, callback) {
+      const img = new Image();
+      img.onload = () => {
+        const maxSide = 900;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.floor(img.width * scale));
+        canvas.height = Math.max(1, Math.floor(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        callback(canvas);
+      };
+      img.src = dataUrl;
+    }
+
+    function makeExternalPhotoCanvas(url, callback) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = () => {
+        try {
+          const maxSide = 900;
+          const scale = Math.min(1, maxSide / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.floor((img.naturalWidth || img.width) * scale));
+          canvas.height = Math.max(1, Math.floor((img.naturalHeight || img.height) * scale));
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          callback(canvas, url);
+        } catch (err) {
+          callback(makeFallbackPhotoCanvas(url), null);
+        }
+      };
+
+      img.onerror = () => callback(makeFallbackPhotoCanvas(url), null);
+      img.src = url;
+    }
+
+    function makeFallbackPhotoCanvas(seed = '') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 900;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grad.addColorStop(0, '#0a2536');
+      grad.addColorStop(0.55, '#164c60');
+      grad.addColorStop(1, '#06131d');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < 36; i++) {
+        ctx.beginPath();
+        const y = 140 + i * 26;
+        for (let x = 0; x <= canvas.width; x += 24) {
+          const yy = y + Math.sin(x * 0.018 + i * 0.8) * 18;
+          if (x === 0) ctx.moveTo(x, yy);
+          else ctx.lineTo(x, yy);
+        }
+        ctx.strokeStyle = `rgba(124, 230, 255, ${0.08 + i * 0.002})`;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.font = '900 54px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PHOTO', canvas.width / 2, canvas.height / 2 - 30);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.48)';
+      ctx.font = '700 28px Arial, sans-serif';
+      ctx.fillText('external image fallback', canvas.width / 2, canvas.height / 2 + 22);
+
+      ctx.font = '600 22px Arial, sans-serif';
+      ctx.fillText(String(seed).slice(0, 44), canvas.width / 2, canvas.height / 2 + 64);
+
+      return canvas;
+    }
+
+    function splitLines(ctx, text, maxWidth, maxLines) {
+      const words = String(text).split(/\s+/).filter(Boolean);
+      const lines = [];
+      let line = '';
+
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = word;
+          if (lines.length >= maxLines - 1) break;
+        } else {
+          line = test;
+        }
+      }
+
+      const usedWords = lines.join(' ').split(/\s+/).filter(Boolean).length;
+      const rest = words.slice(usedWords).join(' ');
+      if (rest) line = rest;
+      if (line) lines.push(line);
+
+      if (lines.length > maxLines) lines.length = maxLines;
+
+      const shown = lines.join(' ');
+      const all = words.join(' ');
+      if (shown.length < all.length && lines.length) {
+        lines[lines.length - 1] = lines[lines.length - 1].slice(0, Math.max(0, lines[lines.length - 1].length - 1)) + '…';
+      }
+
+      return lines.length ? lines : ['...'];
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+      const words = String(text).split(/\s+/).filter(Boolean);
+      let line = '';
+      const lines = [];
+
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = word;
+          if (lines.length >= maxLines - 1) break;
+        } else {
+          line = test;
+        }
+      }
+
+      const usedWords = lines.join(' ').split(/\s+/).filter(Boolean).length;
+      const rest = words.slice(usedWords).join(' ');
+      if (rest) line = rest;
+      if (line) lines.push(line);
+      if (lines.length > maxLines) lines.length = maxLines;
+
+      const start = y - (lines.length - 1) * lineHeight * 0.5;
+      lines.forEach((l, i) => ctx.fillText(l, x, start + i * lineHeight));
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function cut(text, n = 70) {
+      const s = String(text || '').replace(/\s+/g, ' ').trim();
+      return s.length > n ? s.slice(0, n - 1) + '…' : s;
+    }
+
+
+
+    function getLiveUser(key) {
+      const p = liveSourceProfiles[key] || liveSourceProfiles.telegram_bridge;
+      let u = users.find(user => user.nick === p.nick);
+      if (u) return u;
+
+      const a = Math.random() * Math.PI * 2;
+      const d = 24 + Math.random() * 36;
+      u = createUser(p.nick, player.pos.x + Math.cos(a) * d, player.pos.y + Math.sin(a) * d, {
+        followers: Math.floor(800 + Math.random() * 12000),
+        bio: p.bio,
+        color: new THREE.Color(p.color)
+      });
+      return u;
+    }
+
+    function createLivePost({ sourceKey, text, url = '', tags = [], imageUrl = '', nearPlayer = true }) {
+      const u = getLiveUser(sourceKey);
+      const a = Math.random() * Math.PI * 2;
+      const d = nearPlayer ? 10 + Math.random() * 28 : 20 + Math.random() * 55;
+      const x = player.pos.x + Math.cos(a) * d;
+      const z = player.pos.y + Math.sin(a) * d;
+
+      const make = (imageCanvas = null, finalImageUrl = '') => {
+        const p = createPost({
+          text,
+          user: u,
+          x,
+          z,
+          imageData: finalImageUrl || '',
+          imageCanvas
+        });
+
+        p.isLive = true;
+        p.sourceUrl = url;
+        p.sourceName = sourceKey;
+        p.tags = [...new Set([...(p.tags || []), 'live', ...tags])];
+        p.comments.push({ author: '@system', text: 'реальный источник, подгружен из открытого API' });
+        p.highlight = 1.3;
+        liveLoadedCount++;
+        refreshPostTexture(p);
+        updateStats();
+      };
+
+      if (imageUrl) makeExternalPhotoCanvas(imageUrl, make);
+      else make();
+    }
+
+    async function fetchJson(url, timeoutMs = 9000) {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), timeoutMs);
+
+      try {
+        const res = await fetch(url, {
+          signal: ctrl.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    async function loadHackerNewsLive() {
+      const data = await fetchJson('https://hn.algolia.com/api/v1/search_by_date?tags=story&hitsPerPage=10');
+      const hits = (data.hits || []).slice(0, 8);
+
+      for (const hit of hits) {
+        const title = hit.title || hit.story_title || 'Untitled HN story';
+        const points = hit.points ?? 0;
+        const comments = hit.num_comments ?? 0;
+        createLivePost({
+          sourceKey: 'hacker_news',
+          text: 'HN: ' + title + '\\n▲ ' + points + ' · ' + comments + ' comments',
+          url: hit.url || ('https://news.ycombinator.com/item?id=' + hit.objectID),
+          tags: ['news', 'tech', 'live']
+        });
+      }
+    }
+
+    async function loadWikipediaLive() {
+      const url = 'https://en.wikipedia.org/w/api.php?action=query&list=recentchanges&rclimit=8&rcprop=title|timestamp|user|comment&format=json&origin=*';
+      const data = await fetchJson(url);
+      const changes = data?.query?.recentchanges || [];
+
+      for (const item of changes.slice(0, 7)) {
+        createLivePost({
+          sourceKey: 'wiki_live',
+          text: 'Wikipedia edit: ' + item.title + '\\nby ' + (item.user || 'unknown') + (item.comment ? '\\n“' + cut(item.comment, 80) + '”' : ''),
+          url: 'https://en.wikipedia.org/wiki/' + encodeURIComponent(String(item.title || '').replaceAll(' ', '_')),
+          tags: ['wiki', 'live', 'weird']
+        });
+      }
+    }
+
+    async function loadPragueWeatherLive() {
+      const url = 'https://api.open-meteo.com/v1/forecast?latitude=50.0755&longitude=14.4378&current=temperature_2m,wind_speed_10m,weather_code&timezone=Europe%2FPrague';
+      const data = await fetchJson(url);
+      const c = data.current || {};
+      const temp = c.temperature_2m;
+      const wind = c.wind_speed_10m;
+      const code = c.weather_code;
+
+      createLivePost({
+        sourceKey: 'prague_weather',
+        text: 'Prague live weather\\n' + temp + '°C · wind ' + wind + ' km/h · code ' + code + '\\nПогода тоже стала постом в океане.',
+        url: 'https://open-meteo.com/',
+        tags: ['weather', 'live', 'ocean']
+      });
+    }
+
+    async function loadCryptoLive() {
+      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true';
+      const data = await fetchJson(url);
+      const rows = [];
+
+      for (const [id, v] of Object.entries(data || {})) {
+        const price = v.usd;
+        const change = v.usd_24h_change;
+        rows.push(id.toUpperCase() + ': $' + Number(price).toLocaleString('en-US') + ' · 24h ' + Number(change).toFixed(2) + '%');
+      }
+
+      if (rows.length) {
+        createLivePost({
+          sourceKey: 'crypto_tide',
+          text: 'Crypto tide\\n' + rows.join('\\n'),
+          url: 'https://www.coingecko.com/',
+          tags: ['crypto', 'live', 'news']
+        });
+      }
+    }
+
+    async function loadGithubLive() {
+      const data = await fetchJson('https://api.github.com/events?per_page=8');
+      const events = Array.isArray(data) ? data.slice(0, 6) : [];
+
+      for (const ev of events) {
+        const repo = ev.repo?.name || 'unknown/repo';
+        const actor = ev.actor?.login || 'unknown';
+        const type = ev.type || 'GitHubEvent';
+
+        createLivePost({
+          sourceKey: 'github_pulse',
+          text: 'GitHub pulse: ' + type + '\\n' + repo + '\\nby @' + actor,
+          url: 'https://github.com/' + repo,
+          tags: ['tech', 'live', 'work']
+        });
+      }
+    }
+
+    function createTelegramBackendPlaceholder() {
+      createLivePost({
+        sourceKey: 'telegram_bridge',
+        text: 'Telegram bridge ожидает backend\\n/private-group/messages → JSON\\nКогда подключишь бота в группу, реальные сообщения будут всплывать здесь.',
+        url: '',
+        tags: ['telegram', 'live', 'social']
+      });
+    }
+
+    async function loadLiveFeeds() {
+      if (liveLoading) return;
+
+      liveLoading = true;
+      liveBtn.classList.add('active');
+      showToast('Подгружаю реальную информацию из открытых API...');
+
+      const before = liveLoadedCount;
+      const loaders = [
+        loadPragueWeatherLive(),
+        loadHackerNewsLive(),
+        loadWikipediaLive(),
+        loadCryptoLive(),
+        loadGithubLive()
+      ];
+
+      const results = await Promise.allSettled(loaders);
+      createTelegramBackendPlaceholder();
+
+      const failed = results.filter(r => r.status === 'rejected').length;
+      liveLoading = false;
+      lastLiveFetchAt = Date.now();
+      liveBtn.classList.remove('active');
+      updateStats();
+
+      if (liveLoadedCount > before) {
+        showToast('Live feed загружен: +' + (liveLoadedCount - before) + ' реальных карточек' + (failed ? ', часть источников не ответила' : '') + '.');
+      } else {
+        showToast('Не удалось загрузить live API. Оставил демо-поток и Telegram-placeholder.');
+      }
+    }
+
+    function analyzeTags(text, hasImage = false) {
+      const s = String(text || '').toLowerCase();
+      const tags = [];
+
+      if (hasImage) tags.push('photo');
+      if (/мем|кринж|ахах|лол|pov|trend|тренд|вирус/i.test(s)) tags.push('meme');
+      if (/news|breaking|новост|источник|обновлен|срочно/i.test(s)) tags.push('news');
+      if (/ai|нейро|prompt|алгоритм|summary|модель/i.test(s)) tags.push('ai');
+      if (/океан|вода|плыв|лента|поток|контент|дрейф/i.test(s)) tags.push('ocean');
+      if (/подпис|профиль|пользователь|лайк|коммент|соц/i.test(s)) tags.push('social');
+      if (/работ|карьер|созвон|продуктив|деньг|портфолио/i.test(s)) tags.push('work');
+      if (!tags.length) tags.push('weird');
+
+      return [...new Set(tags)];
+    }
+
+    function updatePreferences(post, amount) {
+      if (!post) return;
+
+      for (const tag of post.tags || []) {
+        preferenceScores[tag] = (preferenceScores[tag] || 0) + amount;
+        preferenceScores[tag] = Math.max(-8, Math.min(18, preferenceScores[tag]));
+      }
+    }
+
+    function bestPreferenceTag() {
+      let best = 'ocean';
+      let score = -999;
+
+      for (const [tag, value] of Object.entries(preferenceScores)) {
+        const jitter = Math.random() * 0.8;
+        if (value + jitter > score) {
+          score = value + jitter;
+          best = tag;
+        }
+      }
+
+      if (score <= 0.5) {
+        const neutral = ['ocean', 'meme', 'photo', 'weird'];
+        return neutral[Math.floor(Math.random() * neutral.length)];
+      }
+
+      return best;
+    }
+
+    function spawnPreferredContent(count = 1) {
+      if (!users.length) return;
+
+      for (let i = 0; i < count; i++) {
+        const tag = bestPreferenceTag();
+        const u = users[Math.floor(Math.random() * users.length)];
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 10 + Math.random() * (beaconLevel ? 18 : 28);
+        const x = player.pos.x + Math.cos(angle) * radius;
+        const z = player.pos.y + Math.sin(angle) * radius;
+
+        if (tag === 'photo' || Math.random() < Math.max(0.12, (preferenceScores.photo || 0) * 0.035)) {
+          createPhotoPost({
+            user: u,
+            x,
+            z,
+            url: samplePhotoUrls[Math.floor(Math.random() * samplePhotoUrls.length)],
+            caption: tagTemplates[tag]?.[Math.floor(Math.random() * tagTemplates[tag].length)] || photoCaptions[Math.floor(Math.random() * photoCaptions.length)]
+          });
+        } else {
+          const pool = tagTemplates[tag] || tagTemplates.weird;
+          createPost({
+            text: pool[Math.floor(Math.random() * pool.length)],
+            user: u,
+            x,
+            z
+          });
+        }
+      }
+    }
+
+    function doLike(post, source = 'button') {
+      if (!post) return;
+
+      if (!liked.has(post.id)) {
+        liked.add(post.id);
+        disliked.delete(post.id);
+        post.likes++;
+        energy += 1;
+        updatePreferences(post, 2);
+        post.highlight = 1.5;
+        refreshPostTexture(post);
+
+        if (source === 'swipe') showToast('Свайп вправо: нравится. Океан запомнил вкус.');
+        else showToast('Океан запомнил, что тебе это нравится.');
+
+        spawnPreferredContent(beaconLevel > 1 ? 2 : 1);
+      } else if (source !== 'swipe') {
+        liked.delete(post.id);
+        post.likes = Math.max(0, post.likes - 1);
+        updatePreferences(post, -1);
+        refreshPostTexture(post);
+      }
+
+      updateStats();
+    }
+
+    function doDislike(post, source = 'button') {
+      if (!post) return;
+
+      disliked.add(post.id);
+      liked.delete(post.id);
+      updatePreferences(post, -2);
+      post.highlight = 0;
+      post.x += (Math.random() - 0.5) * 90;
+      post.z += 80 + Math.random() * 60;
+      post.vx += (Math.random() - 0.5) * 4;
+      post.vz += 4 + Math.random() * 3;
+
+      showToast(source === 'swipe' ? 'Свайп влево: не нравится. Похожего будет меньше.' : 'Похожего контента будет меньше.');
+      closePostWithGesture('left');
+      updateStats();
+    }
+
+    function closePostWithGesture(direction = 'up') {
+      const panel = document.querySelector('.post-panel');
+      if (panel) {
+        panel.classList.remove('swipe-right', 'swipe-left', 'swipe-up');
+        panel.classList.add(direction === 'right' ? 'swipe-right' : direction === 'left' ? 'swipe-left' : 'swipe-up');
+        setTimeout(() => {
+          panel.classList.remove('swipe-right', 'swipe-left', 'swipe-up');
+          postModal.classList.remove('show');
+        }, 170);
+      } else {
+        postModal.classList.remove('show');
+      }
+    }
+
+    function setupPostSwipeGestures() {
+      const panel = document.querySelector('.post-panel');
+      if (!panel) return;
+
+      panel.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('button, textarea, .nick')) return;
+        swipeStart = {
+          x: e.clientX,
+          y: e.clientY,
+          t: performance.now()
+        };
+      });
+
+      panel.addEventListener('pointermove', (e) => {
+        if (!swipeStart) return;
+
+        const dx = e.clientX - swipeStart.x;
+        const dy = e.clientY - swipeStart.y;
+
+        panel.classList.toggle('swipe-right', dx > 45 && Math.abs(dx) > Math.abs(dy));
+        panel.classList.toggle('swipe-left', dx < -45 && Math.abs(dx) > Math.abs(dy));
+        panel.classList.toggle('swipe-up', dy < -45 && Math.abs(dy) > Math.abs(dx));
+      });
+
+      panel.addEventListener('pointerup', (e) => {
+        if (!swipeStart) return;
+
+        const dx = e.clientX - swipeStart.x;
+        const dy = e.clientY - swipeStart.y;
+        const dt = performance.now() - swipeStart.t;
+        swipeStart = null;
+
+        panel.classList.remove('swipe-right', 'swipe-left', 'swipe-up');
+
+        if (dt < 900 && dx > 85 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+          doLike(selectedPost, 'swipe');
+          closePostWithGesture('right');
+          return;
+        }
+
+        if (dt < 900 && dx < -85 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+          doDislike(selectedPost, 'swipe');
+          return;
+        }
+
+        if (dt < 900 && dy < -85 && Math.abs(dy) > Math.abs(dx) * 1.05) {
+          showToast('Свайп вверх: пост закрыт.');
+          closePostWithGesture('up');
+        }
+      });
+
+      panel.addEventListener('pointercancel', () => {
+        swipeStart = null;
+        panel.classList.remove('swipe-right', 'swipe-left', 'swipe-up');
+      });
+    }
+
+    function updatePreferenceSpawns(dt) {
+      preferenceSpawnTimer -= dt * (1 + beaconLevel * 0.42);
+
+      if (preferenceSpawnTimer <= 0) {
+        const hasTaste = Object.values(preferenceScores).some(v => v > 1);
+        if (hasTaste) spawnPreferredContent(1 + (beaconLevel >= 3 ? 1 : 0));
+        preferenceSpawnTimer = Math.max(5.5, 14 - beaconLevel * 2.2);
+      }
+    }
+
+    function createUser(nick, x, z, options = {}) {
+      const color = options.color || new THREE.Color().setHSL(Math.random(), 0.75, 0.65);
+      const colorCss = '#' + color.getHexString();
+      const user = {
+        id: nick,
+        nick,
+        color,
+        colorCss,
+        x,
+        z,
+        tx: x,
+        tz: z,
+        vx: 0,
+        vz: 0,
+        seed: Math.random() * 1000,
+        followers: options.followers ?? Math.floor(20 + Math.random() * 9000),
+        bio: options.bio || botBios[Math.floor(Math.random() * botBios.length)],
+        posts: [],
+        group: null,
+        body: null,
+        nickSprite: null,
+        nextPostTimer: 4 + Math.random() * 10,
+        targetPost: null
+      };
+
+      const group = new THREE.Group();
+
+      const body = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.45, 0.9, 6, 14),
+        new THREE.MeshStandardMaterial({
+          color,
+          emissive: color,
+          emissiveIntensity: 0.45,
+          roughness: 0.38,
+          metalness: 0.18
+        })
+      );
+      body.userData = { kind: 'user', user };
+      group.add(body);
+      clickableObjects.push(body);
+
+      const halo = new THREE.Mesh(
+        new THREE.TorusGeometry(1.05, 0.035, 8, 64),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.56 })
+      );
+      halo.rotation.x = Math.PI / 2;
+      group.add(halo);
+
+      const nickSprite = makeTextSprite('@' + nick, {
+        bg1: 'rgba(255,255,255,0.94)',
+        bg2: 'rgba(210,245,255,0.78)',
+        fg: 'rgba(4,18,28,0.96)',
+        stroke: 'rgba(255,255,255,0.55)',
+        glow: 'rgba(255,255,255,0.42)',
+        size: 31,
+        height: 76,
+        maxWidth: 520,
+        minWidth: 280
+      });
+      nickSprite.position.y = 1.85;
+      nickSprite.scale.set(4.1, 1.02, 1);
+      nickSprite.userData = { kind: 'user', user };
+      group.add(nickSprite);
+      clickableObjects.push(nickSprite);
+
+      user.group = group;
+      user.body = body;
+      user.halo = halo;
+      user.nickSprite = nickSprite;
+
+      scene.add(group);
+      users.push(user);
+      return user;
+    }
+
+    function createPost({ text, user, x, z, imageData = null, imageCanvas = null, fromUser = false }) {
+      const id = 'post_' + nextPostId++;
+      const gradients = [
+        ['rgba(255,255,255,0.97)', 'rgba(174,255,231,0.90)'],
+        ['rgba(255,235,248,0.97)', 'rgba(255,132,198,0.86)'],
+        ['rgba(255,248,210,0.97)', 'rgba(255,176,102,0.86)'],
+        ['rgba(218,234,255,0.97)', 'rgba(150,174,255,0.88)'],
+        ['rgba(235,255,230,0.97)', 'rgba(160,255,188,0.88)']
+      ];
+      const g = gradients[Math.floor(Math.random() * gradients.length)];
+
+      const post = {
+        id,
+        text: String(text || '').trim().slice(0, 220) || '...',
+        user,
+        x,
+        z,
+        vx: (Math.random() - 0.5) * 0.9,
+        vz: (Math.random() - 0.5) * 0.9,
+        seed: Math.random() * 1000,
+        likes: Math.floor(Math.random() * 400),
+        comments: [],
+        imageData,
+        imageCanvas,
+        gradientA: g[0],
+        gradientB: g[1],
+        tags: analyzeTags(text, Boolean(imageData || imageCanvas)),
+        sourceUrl: null,
+        isLive: false,
+        sourceName: '',
+        sprite: null,
+        age: 0,
+        openCount: 0,
+        highlight: fromUser ? 1.4 : 0
+      };
+
+      if (!post.comments.length) {
+        const preset = [
+          ['@feed_ghost', 'это уже было, но теперь мокрое'],
+          ['@meme_karp', 'сохранил в жабры'],
+          ['@ai_siren', 'summary: странно, но цепляет']
+        ];
+        const c = preset[Math.floor(Math.random() * preset.length)];
+        post.comments.push({ author: c[0], text: c[1] });
+      }
+
+      const texture = makePostTexture(post);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+      sprite.scale.set(5.0, 6.72, 1);
+      sprite.userData = { kind: 'post', post };
+      post.sprite = sprite;
+
+      scene.add(sprite);
+      clickableObjects.push(sprite);
+      posts.push(post);
+      user.posts.push(post);
+      spawnRipple(x, z, fromUser ? 0x9cf7ff : 0xff83c7);
+      updateStats();
+
+      return post;
+    }
+
+    function createPhotoPost({ user, x, z, url, caption, fromUser = false }) {
+      makeExternalPhotoCanvas(url, (imageCanvas, finalUrl) => {
+        const p = createPost({
+          text: caption || 'фото из открытого потока',
+          user,
+          x,
+          z,
+          imageData: finalUrl || '',
+          imageCanvas,
+          fromUser
+        });
+
+        p.comments.push({ author: '@visual_bot', text: 'фото тоже стало частью океана' });
+        refreshPostTexture(p);
+      });
+    }
+
+    function refreshPostTexture(post) {
+      if (!post || !post.sprite) return;
+      const old = post.sprite.material.map;
+      post.sprite.material.map = makePostTexture(post);
+      post.sprite.material.needsUpdate = true;
+      if (old) old.dispose();
+    }
+
+
+    function createBeaconMesh() {
+      const group = new THREE.Group();
+
+      const base = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.25, 1.55, 0.75, 20),
+        new THREE.MeshStandardMaterial({
+          color: 0x7ce6ff,
+          emissive: 0x064958,
+          emissiveIntensity: 0.65,
+          roughness: 0.34,
+          metalness: 0.28
+        })
+      );
+      group.add(base);
+
+      const core = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.88, 1),
+        new THREE.MeshStandardMaterial({
+          color: 0xa4ffdf,
+          emissive: 0x00ffd0,
+          emissiveIntensity: 0.9,
+          roughness: 0.25,
+          metalness: 0.22
+        })
+      );
+      core.position.y = 1.25;
+      group.add(core);
+
+      const ring1 = new THREE.Mesh(
+        new THREE.TorusGeometry(1.65, 0.045, 8, 80),
+        new THREE.MeshBasicMaterial({ color: 0x9cf7ff, transparent: true, opacity: 0.72 })
+      );
+      ring1.rotation.x = Math.PI / 2;
+      ring1.position.y = 1.25;
+      group.add(ring1);
+
+      const ring2 = new THREE.Mesh(
+        new THREE.TorusGeometry(2.15, 0.035, 8, 80),
+        new THREE.MeshBasicMaterial({ color: 0xff83c7, transparent: true, opacity: 0.48 })
+      );
+      ring2.rotation.x = Math.PI / 2;
+      ring2.position.y = 1.70;
+      group.add(ring2);
+
+      group.userData = { base, core, ring1, ring2 };
+      return group;
+    }
+
+    function buildOrUpgradeBeacon() {
+      const cost = beaconLevel === 0 ? 3 : 3 + beaconLevel * 2;
+
+      if (energy < cost) {
+        showToast('Нужно ' + cost + ' энергии. Лайкай посты или комментируй, чтобы строить.');
+        return;
+      }
+
+      energy -= cost;
+      beaconLevel += 1;
+
+      if (!beaconGroup) {
+        beaconGroup = createBeaconMesh();
+        beaconGroup.position.set(player.pos.x + 5, 0, player.pos.y + 5);
+        scene.add(beaconGroup);
+        showToast('Маяк вкуса построен. Он притягивает похожий контент и пользователей.');
+      } else {
+        const s = 1 + beaconLevel * 0.18;
+        beaconGroup.scale.setScalar(s);
+        showToast('Маяк улучшен до уровня ' + beaconLevel + '. Лента вокруг тебя станет точнее.');
+      }
+
+      spawnPreferredContent(2 + Math.min(3, beaconLevel));
+      updateStats();
+    }
+
+    function updateBeacon(t) {
+      if (!beaconGroup) return;
+
+      const x = beaconGroup.position.x;
+      const z = beaconGroup.position.z;
+      beaconGroup.position.y = waveHeight(x, z, t) + 0.42;
+      beaconGroup.userData.core.rotation.y += 0.018 + beaconLevel * 0.004;
+      beaconGroup.userData.core.rotation.x = Math.sin(t * 1.2) * 0.24;
+      beaconGroup.userData.ring1.rotation.z += 0.012 + beaconLevel * 0.002;
+      beaconGroup.userData.ring2.rotation.z -= 0.009 + beaconLevel * 0.002;
+
+      const pulse = 1 + Math.sin(t * 2.1) * 0.04;
+      beaconGroup.userData.core.scale.setScalar(pulse);
+
+      // Pull users slightly toward your beacon, making it feel socially attractive.
+      for (const user of users) {
+        if (user.nick === 'you') continue;
+        const d = Math.hypot(user.x - x, user.z - z);
+        if (d < 75 + beaconLevel * 20 && Math.random() < 0.0035 * beaconLevel) {
+          user.tx = x + (Math.random() - 0.5) * 12;
+          user.tz = z + (Math.random() - 0.5) * 12;
+        }
+      }
+    }
+
+    function updateStats() {
+      liveCountEl.textContent = liveLoadedCount;
+      followCountEl.textContent = followed.size;
+      postCountEl.textContent = posts.length;
+      energyCountEl.textContent = energy;
+      beaconLevelEl.textContent = beaconLevel;
+      buildBeaconBtn.classList.toggle('active', beaconLevel > 0);
+    }
+
+    function updateUsers(dt, t) {
+      for (const user of users) {
+        user.nextPostTimer -= dt * (1 + trendPower * 0.9);
+
+        if (user.nextPostTimer <= 0) {
+          user.nextPostTimer = 12 + Math.random() * 22;
+          if (Math.random() < 0.72) {
+            const x = user.x + (Math.random() - 0.5) * 5;
+            const z = user.z + (Math.random() - 0.5) * 5;
+
+            if (Math.random() < 0.42) {
+              createPhotoPost({
+                user,
+                x,
+                z,
+                url: samplePhotoUrls[Math.floor(Math.random() * samplePhotoUrls.length)],
+                caption: photoCaptions[Math.floor(Math.random() * photoCaptions.length)]
+              });
+            } else {
+              createPost({
+                text: samplePosts[Math.floor(Math.random() * samplePosts.length)],
+                user,
+                x,
+                z
+              });
+            }
+          }
+        }
+
+        if (!user.targetPost || Math.random() < dt * 0.08) {
+          user.targetPost = posts.length ? posts[Math.floor(Math.random() * posts.length)] : null;
+        }
+
+        if (user.targetPost && Math.random() < 0.74) {
+          user.tx = user.targetPost.x + Math.sin(t + user.seed) * 4.4;
+          user.tz = user.targetPost.z + Math.cos(t * 0.9 + user.seed) * 4.4;
+        } else {
+          user.tx += (Math.random() - 0.5) * dt * 7;
+          user.tz += (Math.random() - 0.5) * dt * 7;
+        }
+
+        // Sometimes approach player like social pressure.
+        if (Math.random() < dt * 0.018) {
+          const a = Math.random() * Math.PI * 2;
+          const d = 6 + Math.random() * 13;
+          user.tx = player.pos.x + Math.cos(a) * d;
+          user.tz = player.pos.y + Math.sin(a) * d;
+        }
+
+        // If you build a taste beacon, users start drifting toward it.
+        if (beaconGroup && Math.random() < dt * (0.018 + beaconLevel * 0.012)) {
+          user.tx = beaconGroup.position.x + (Math.random() - 0.5) * (20 - Math.min(12, beaconLevel * 2));
+          user.tz = beaconGroup.position.z + (Math.random() - 0.5) * (20 - Math.min(12, beaconLevel * 2));
+        }
+
+        const dx = user.tx - user.x;
+        const dz = user.tz - user.z;
+        const dist = Math.hypot(dx, dz);
+        const speed = 2.6 + trendPower * 1.2;
+
+        if (dist > 0.2) {
+          const desiredVx = (dx / dist) * speed;
+          const desiredVz = (dz / dist) * speed;
+          user.vx += (desiredVx - user.vx) * Math.min(1, dt * 1.4);
+          user.vz += (desiredVz - user.vz) * Math.min(1, dt * 1.4);
+        } else {
+          user.vx *= 0.92;
+          user.vz *= 0.92;
+        }
+
+        // Separate users
+        for (const other of users) {
+          if (other === user) continue;
+          const ox = user.x - other.x;
+          const oz = user.z - other.z;
+          const od = Math.hypot(ox, oz);
+          if (od > 0.001 && od < 5.2) {
+            const push = (5.2 - od) * 0.35;
+            user.vx += (ox / od) * push * dt;
+            user.vz += (oz / od) * push * dt;
+          }
+        }
+
+        const sp = Math.hypot(user.vx, user.vz);
+        const limit = 3.9 + trendPower * 1.6;
+        if (sp > limit) {
+          user.vx = (user.vx / sp) * limit;
+          user.vz = (user.vz / sp) * limit;
+        }
+
+        user.x += user.vx * dt;
+        user.z += user.vz * dt;
+
+        const y = waveHeight(user.x, user.z, t) + 0.92 + Math.sin(t * 1.2 + user.seed) * 0.12;
+        user.group.position.set(user.x, y, user.z);
+        user.body.rotation.y += dt * 0.5;
+        user.body.rotation.z = Math.sin(t * 1.3 + user.seed) * 0.11;
+        user.halo.rotation.z += dt * 0.42;
+
+        if (sp > 0.05) user.group.rotation.y = Math.atan2(user.vx, user.vz);
+
+        if (Math.hypot(user.x - player.pos.x, user.z - player.pos.y) > 170) {
+          const a = Math.random() * Math.PI * 2;
+          const d = 55 + Math.random() * 50;
+          user.x = player.pos.x + Math.cos(a) * d;
+          user.z = player.pos.y + Math.sin(a) * d;
+          user.tx = user.x + (Math.random() - 0.5) * 20;
+          user.tz = user.z + (Math.random() - 0.5) * 20;
+        }
+      }
+    }
+
+    function updatePosts(dt, t) {
+      for (let i = posts.length - 1; i >= 0; i--) {
+        const p = posts[i];
+        p.age += dt;
+
+        const currentX = Math.sin(t * 0.25 + p.seed) * 0.06 + Math.sin((p.z + t) * 0.025) * 0.038;
+        const currentZ = Math.cos(t * 0.22 + p.seed * 1.7) * 0.06 + Math.cos((p.x - t) * 0.023) * 0.038;
+        p.vx += (currentX + Math.sin(t + p.seed) * trendPower * 0.11) * dt;
+        p.vz += (currentZ + Math.cos(t + p.seed) * trendPower * 0.11) * dt;
+
+        const speed = Math.hypot(p.vx, p.vz);
+        const maxSpeed = 2.2 + trendPower * 1.7;
+        if (speed > maxSpeed) {
+          p.vx = (p.vx / speed) * maxSpeed;
+          p.vz = (p.vz / speed) * maxSpeed;
+        }
+
+        p.vx *= 0.997;
+        p.vz *= 0.997;
+        p.x += p.vx * dt;
+        p.z += p.vz * dt;
+
+        p.highlight = Math.max(0, p.highlight - dt * 0.7);
+
+        const y = waveHeight(p.x, p.z, t) + 1.85 + Math.sin(t * 1.6 + p.seed) * 0.16;
+        p.sprite.position.set(p.x, y + p.highlight * 0.32, p.z);
+        p.sprite.material.opacity = 0.84 + p.highlight * 0.16;
+
+        const d = Math.hypot(p.x - player.pos.x, p.z - player.pos.y);
+        if (d < 8 && p.openCount === 0 && Math.random() < dt * 0.18) {
+          p.highlight = 1;
+        }
+
+        if (d > 235 && posts.length > 28) {
+          removePost(p);
+        }
+      }
+
+      // Soft post collisions
+      for (let i = 0; i < posts.length; i++) {
+        for (let j = i + 1; j < posts.length; j++) {
+          const a = posts[i];
+          const b = posts[j];
+          const dx = b.x - a.x;
+          const dz = b.z - a.z;
+          const dist = Math.hypot(dx, dz);
+          const min = 6.5;
+          if (dist > 0.001 && dist < min) {
+            const nx = dx / dist;
+            const nz = dz / dist;
+            const push = (min - dist) * 0.5;
+            a.x -= nx * push;
+            a.z -= nz * push;
+            b.x += nx * push;
+            b.z += nz * push;
+            a.vx -= nx * 0.08;
+            a.vz -= nz * 0.08;
+            b.vx += nx * 0.08;
+            b.vz += nz * 0.08;
+          }
+        }
+      }
+    }
+
+    function removePost(p) {
+      const idx = posts.indexOf(p);
+      if (idx >= 0) posts.splice(idx, 1);
+
+      const userIdx = p.user.posts.indexOf(p);
+      if (userIdx >= 0) p.user.posts.splice(userIdx, 1);
+
+      const clickIdx = clickableObjects.indexOf(p.sprite);
+      if (clickIdx >= 0) clickableObjects.splice(clickIdx, 1);
+
+      scene.remove(p.sprite);
+      if (p.sprite.material.map) p.sprite.material.map.dispose();
+      p.sprite.material.dispose();
+      updateStats();
+    }
+
+    function spawnRipple(x, z, color = 0x9cf7ff) {
+      const geo = new THREE.RingGeometry(0.45, 0.52, 64);
+      const mat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.42,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+      const ring = new THREE.Mesh(geo, mat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(x, 0.04, z);
+      scene.add(ring);
+      ripples.push({ ring, age: 0 });
+    }
+
+    function updateRipples(dt, t) {
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.age += dt;
+        const s = 1 + r.age * 8.5;
+        r.ring.scale.setScalar(s);
+        r.ring.material.opacity = Math.max(0, 0.42 * (1 - r.age / 1.3));
+        r.ring.position.y = waveHeight(r.ring.position.x, r.ring.position.z, t) + 0.05;
+
+        if (r.age > 1.3) {
+          scene.remove(r.ring);
+          r.ring.geometry.dispose();
+          r.ring.material.dispose();
+          ripples.splice(i, 1);
+        }
+      }
+    }
+
+    function updateAvatar(t, dt) {
+      const y = waveHeight(player.pos.x, player.pos.y, t) + 0.72;
+      playerAvatar.group.position.set(player.pos.x, y, player.pos.y);
+      playerAvatar.body.rotation.y += dt * 0.8;
+      playerAvatar.body.rotation.z = Math.sin(t * 1.4) * 0.1;
+      playerAvatar.ring.rotation.z += dt * 0.8;
+    }
+
+    // UI logic
+    createBtn.addEventListener('click', () => {
+      composer.classList.add('show');
+      setTimeout(() => postInput.focus(), 40);
+    });
+
+    closeComposerBtn.addEventListener('click', () => closeComposer());
+    composer.addEventListener('click', (e) => {
+      if (e.target === composer) closeComposer();
+    });
+
+    function closeComposer() {
+      composer.classList.remove('show');
+    }
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+
+      fileName.textContent = 'Прикреплено: ' + file.name;
+      fileName.classList.add('show');
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        selectedImageData = reader.result;
+        selectedImagePreviewText = file.name;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    sendPostBtn.addEventListener('click', () => submitPost());
+    postInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitPost();
+    });
+
+    function submitPost() {
+      const text = postInput.value.trim();
+
+      if (!text && !selectedImageData) {
+        showToast('Напиши текст или прикрепи картинку.');
+        return;
+      }
+
+      const you = users.find(u => u.nick === 'you') || createUser('you', player.pos.x, player.pos.y, {
+        followers: 1,
+        bio: 'ты плаваешь внутри собственной ленты',
+        color: new THREE.Color(0x7ce6ff)
+      });
+
+      you.x = player.pos.x + 1.2;
+      you.z = player.pos.y + 1.2;
+
+      const make = (imageCanvas = null) => {
+        const post = createPost({
+          text: text || selectedImagePreviewText || 'image post',
+          user: you,
+          x: player.pos.x + (Math.random() - 0.5) * 3,
+          z: player.pos.y + (Math.random() - 0.5) * 3,
+          imageData: selectedImageData,
+          imageCanvas,
+          fromUser: true
+        });
+
+        post.comments.push({ author: '@contact_bot', text: 'я уже подплыл. этот пост пахнет новым форматом ленты' });
+        refreshPostTexture(post);
+
+        showToast('Пост брошен в ленту-океан. По нему можно кликнуть.');
+        resetComposer();
+        openPost(post);
+      };
+
+      if (selectedImageData) makeImageCanvas(selectedImageData, make);
+      else make(null);
+    }
+
+    function resetComposer() {
+      postInput.value = '';
+      fileInput.value = '';
+      selectedImageData = null;
+      selectedImagePreviewText = '';
+      fileName.textContent = '';
+      fileName.classList.remove('show');
+      closeComposer();
+    }
+
+    randomPostBtn.addEventListener('click', () => {
+      if (!posts.length) return;
+      const p = posts[Math.floor(Math.random() * posts.length)];
+      p.highlight = 1.4;
+      const a = Math.random() * Math.PI * 2;
+      player.target.set(p.x + Math.cos(a) * 8, p.z + Math.sin(a) * 8);
+      spawnRipple(p.x, p.z, 0xff83c7);
+      showToast('Случайный пост: @' + p.user.nick);
+    });
+
+    liveBtn.addEventListener('click', () => loadLiveFeeds());
+    buildBeaconBtn.addEventListener('click', () => buildOrUpgradeBeacon());
+
+    trendBtn.addEventListener('click', () => {
+      trendTimer = 24;
+      showToast('Тренд-волна: пользователи начинают постить быстрее.');
+      for (let i = 0; i < 8; i++) {
+        const u = users[Math.floor(Math.random() * users.length)];
+        const x = player.pos.x + (Math.random() - 0.5) * 40;
+        const z = player.pos.y + (Math.random() - 0.5) * 40;
+
+        if (i % 2 === 0) {
+          createPhotoPost({
+            user: u,
+            x,
+            z,
+            url: samplePhotoUrls[(i + Math.floor(Math.random() * samplePhotoUrls.length)) % samplePhotoUrls.length],
+            caption: photoCaptions[i % photoCaptions.length]
+          });
+        } else {
+          createPost({
+            text: ['trend wave 🌊', 'все внезапно начали это репостить', 'лента вспенилась', 'алгоритм толкает это наверх'][i % 4],
+            user: u,
+            x,
+            z
+          });
+        }
+      }
+    });
+
+    closePostBtn.addEventListener('click', () => postModal.classList.remove('show'));
+    postModal.addEventListener('click', (e) => {
+      if (e.target === postModal) postModal.classList.remove('show');
+    });
+
+    closeProfileBtn.addEventListener('click', () => profileModal.classList.remove('show'));
+    profileModal.addEventListener('click', (e) => {
+      if (e.target === profileModal) profileModal.classList.remove('show');
+    });
+
+    setupPostSwipeGestures();
+
+    postNick.addEventListener('click', () => {
+      if (selectedPost) openProfile(selectedPost.user);
+    });
+
+    postFollowBtn.addEventListener('click', () => {
+      if (selectedPost) toggleFollow(selectedPost.user);
+      renderPostModal();
+    });
+
+    profileFollowBtn.addEventListener('click', () => {
+      if (selectedUser) toggleFollow(selectedUser);
+      renderProfileModal();
+    });
+
+    likeBtn.addEventListener('click', () => {
+      if (!selectedPost) return;
+      doLike(selectedPost, 'button');
+      renderPostModal();
+    });
+
+    commentFocusBtn.addEventListener('click', () => commentInput.focus());
+
+    sourceBtn.addEventListener('click', () => {
+      if (!selectedPost || !selectedPost.sourceUrl) {
+        showToast('У этого поста нет внешнего источника.');
+        return;
+      }
+
+      window.open(selectedPost.sourceUrl, '_blank', 'noopener,noreferrer');
+    });
+
+    repostBtn.addEventListener('click', () => {
+      if (!selectedPost) return;
+      const you = users.find(u => u.nick === 'you') || createUser('you', player.pos.x, player.pos.y, {
+        followers: 1,
+        bio: 'ты плаваешь внутри собственной ленты',
+        color: new THREE.Color(0x7ce6ff)
+      });
+
+      const repost = createPost({
+        text: 'репост @' + selectedPost.user.nick + ': ' + selectedPost.text,
+        user: you,
+        x: player.pos.x + (Math.random() - 0.5) * 4,
+        z: player.pos.y + (Math.random() - 0.5) * 4,
+        fromUser: true
+      });
+      repost.comments.push({ author: '@repost_rat', text: 'репост украден успешно' });
+      refreshPostTexture(repost);
+      showToast('Репост брошен в океан.');
+    });
+
+    sendCommentBtn.addEventListener('click', () => submitComment());
+    commentInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submitComment();
+    });
+
+    function submitComment() {
+      if (!selectedPost) return;
+      const text = commentInput.value.trim();
+      if (!text) return;
+
+      selectedPost.comments.push({ author: '@you', text });
+      selectedPost.highlight = 1;
+      energy += 1;
+      updatePreferences(selectedPost, 1);
+      refreshPostTexture(selectedPost);
+      commentInput.value = '';
+
+      // The comment becomes a small floating post-like fragment next to the original.
+      const you = users.find(u => u.nick === 'you') || createUser('you', player.pos.x, player.pos.y, {
+        followers: 1,
+        bio: 'ты плаваешь внутри собственной ленты',
+        color: new THREE.Color(0x7ce6ff)
+      });
+      const commentPost = createPost({
+        text: 'comment under @' + selectedPost.user.nick + ': ' + text,
+        user: you,
+        x: selectedPost.x + (Math.random() - 0.5) * 5,
+        z: selectedPost.z + (Math.random() - 0.5) * 5,
+        fromUser: true
+      });
+      commentPost.comments.push({ author: '@system', text: 'это комментарий, который тоже стал мусором в океане' });
+      refreshPostTexture(commentPost);
+
+      updateStats();
+      renderPostModal();
+      showToast('Комментарий добавлен. +1 энергия для маяка.');
+    }
+
+    function openPost(post) {
+      selectedPost = post;
+      selectedUser = post.user;
+      post.openCount++;
+      post.highlight = 1.2;
+      renderPostModal();
+      postModal.classList.add('show');
+    }
+
+    function renderPostModal() {
+      if (!selectedPost) return;
+      const p = selectedPost;
+      postAvatar.textContent = p.user.nick[0].toUpperCase();
+      postAvatar.style.background = `linear-gradient(135deg, #ffffff, ${p.user.colorCss})`;
+      postNick.textContent = '@' + p.user.nick;
+      postMeta.textContent = `${p.likes} лайков · ${p.comments.length} комментариев · свайп: → нравится / ← нет / ↑ закрыть`;
+      postBody.textContent = p.text;
+
+      if (p.imageData) {
+        postImage.src = p.imageData;
+        postImage.classList.add('show');
+      } else {
+        postImage.src = '';
+        postImage.classList.remove('show');
+      }
+
+      likeBtn.textContent = liked.has(p.id) ? '♥ лайк' : '♡ лайк';
+      likeBtn.classList.toggle('active', liked.has(p.id));
+      sourceBtn.style.display = p.sourceUrl ? 'inline-flex' : 'none';
+
+      renderFollowButton(postFollowBtn, p.user);
+      commentsTitle.textContent = `Комментарии (${p.comments.length})`;
+      comments.innerHTML = p.comments.map(c => `<div class="comment"><b>${escapeHtml(c.author)}</b> ${escapeHtml(c.text)}</div>`).join('');
+      comments.scrollTop = comments.scrollHeight;
+    }
+
+    function openProfile(user) {
+      selectedUser = user;
+      renderProfileModal();
+      profileModal.classList.add('show');
+    }
+
+    function renderProfileModal() {
+      if (!selectedUser) return;
+      const u = selectedUser;
+      profileAvatar.textContent = u.nick[0].toUpperCase();
+      profileAvatar.style.background = `linear-gradient(135deg, #ffffff, ${u.colorCss})`;
+      profileNick.textContent = '@' + u.nick;
+      profileMeta.textContent = `${u.followers} подписчиков · ${u.posts.length} постов`;
+      profileBio.textContent = u.bio;
+      renderFollowButton(profileFollowBtn, u);
+
+      profilePosts.innerHTML = '';
+      const list = u.posts.slice(-8).reverse();
+      if (!list.length) {
+        profilePosts.innerHTML = '<div class="profile-post">Посты уплыли слишком далеко.</div>';
+        return;
+      }
+
+      for (const p of list) {
+        const div = document.createElement('div');
+        div.className = 'profile-post';
+        div.textContent = cut(p.text, 120);
+        div.addEventListener('click', () => {
+          profileModal.classList.remove('show');
+          openPost(p);
+        });
+        profilePosts.appendChild(div);
+      }
+    }
+
+    function renderFollowButton(btn, user) {
+      if (user.nick === 'you') {
+        btn.textContent = 'Это ты';
+        btn.classList.add('following');
+        btn.disabled = true;
+        return;
+      }
+
+      btn.disabled = false;
+      const isFollowing = followed.has(user.id);
+      btn.textContent = isFollowing ? 'Вы подписаны' : 'Подписаться';
+      btn.classList.toggle('following', isFollowing);
+    }
+
+    function toggleFollow(user) {
+      if (!user || user.nick === 'you') return;
+
+      if (followed.has(user.id)) {
+        followed.delete(user.id);
+        user.followers = Math.max(0, user.followers - 1);
+        showToast('Вы отписались от @' + user.nick);
+      } else {
+        followed.add(user.id);
+        user.followers++;
+        user.highlight = 1;
+        showToast('Вы подписались на @' + user.nick);
+      }
+
+      updateStats();
+    }
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2300);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, (m) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      })[m]);
+    }
+
+    function updateTrend(dt) {
+      if (trendTimer > 0) {
+        trendTimer -= dt;
+        trendPower += (1 - trendPower) * Math.min(1, dt * 1.2);
+      } else {
+        trendPower += (0 - trendPower) * Math.min(1, dt * 1.0);
+      }
+
+      scene.fog.density += ((0.0215 + trendPower * 0.008) - scene.fog.density) * Math.min(1, dt * 1.3);
+    }
+
+    function seedWorld() {
+      const you = createUser('you', 0, 0, {
+        followers: 1,
+        bio: 'ты плаваешь внутри собственной ленты',
+        color: new THREE.Color(0x7ce6ff)
+      });
+      you.group.visible = false;
+
+      for (let i = 0; i < botNames.length; i++) {
+        const a = (i / botNames.length) * Math.PI * 2 + Math.random() * 0.4;
+        const d = 18 + Math.random() * 68;
+        const color = new THREE.Color().setHSL((i / botNames.length + 0.08) % 1, 0.74, 0.62);
+        const u = createUser(botNames[i], Math.cos(a) * d, Math.sin(a) * d, {
+          followers: Math.floor(30 + Math.random() * 9000),
+          bio: botBios[i % botBios.length],
+          color
+        });
+
+        for (let j = 0; j < 1 + Math.floor(Math.random() * 2); j++) {
+          const x = u.x + (Math.random() - 0.5) * 8;
+          const z = u.z + (Math.random() - 0.5) * 8;
+
+          if ((i + j) % 3 === 0) {
+            createPhotoPost({
+              user: u,
+              x,
+              z,
+              url: samplePhotoUrls[(i + j) % samplePhotoUrls.length],
+              caption: photoCaptions[(i + j) % photoCaptions.length]
+            });
+          } else {
+            createPost({
+              text: samplePosts[(i + j * 3) % samplePosts.length],
+              user: u,
+              x,
+              z
+            });
+          }
+        }
+      }
+
+      showToast('Сейчас подтяну реальные открытые источники: HN, Wikipedia, погода, crypto, GitHub.');
+      updateStats();
+      setTimeout(() => loadLiveFeeds(), 900);
+    }
+
+    function animate() {
+      const dt = Math.min(clock.getDelta(), 0.033);
+      const t = clock.elapsedTime;
+
+      updateTrend(dt);
+      updatePlayer(dt, t);
+      updateAvatar(t, dt);
+      updateUsers(dt, t);
+      updatePosts(dt, t);
+      updatePreferenceSpawns(dt);
+      updateBeacon(t);
+      updateRipples(dt, t);
+
+      water.position.x = camera.position.x;
+      water.position.z = camera.position.z;
+      waterUniforms.time.value = t;
+      waterUniforms.offset.value.set(water.position.x, water.position.z);
+      waterUniforms.cameraPos.value.copy(camera.position);
+      waterUniforms.trend.value = trendPower;
+
+      sky.position.copy(camera.position);
+      skyMat.uniforms.time.value = t;
+      skyMat.uniforms.trend.value = trendPower;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener('resize', resize);
+
+    seedWorld();
+    animate();
+  </script>
+</body>
+</html>
